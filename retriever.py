@@ -5,22 +5,19 @@ from dotenv import load_dotenv
 import os
 import warnings
 warnings.filterwarnings('ignore')
+from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 
-from dotenv import load_dotenv
-from langchain_openai import OpenAIEmbeddings
-import os
 
 
 
 load_dotenv()
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
-
-embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 
+
+embeddings = FastEmbedEmbeddings()
 def retrieve_from_pinecone(user_query="What is the syllabus about"):
-    index_name = "test-index"
+    index_name = "testfinal"
     index = pc.Index(index_name)
     
     #print("Index stats:", index.describe_index_stats())
