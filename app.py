@@ -12,19 +12,21 @@ from langchain_openai import ChatOpenAI
 import nest_asyncio
 from dotenv import load_dotenv
 import os
+from call_llm import *
 
 load_dotenv()
 nest_asyncio.apply()
 
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+#OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 # Function to get response from the AI model
+
 def get_response(user_query):
     context = retriever.retrieve_from_pinecone(user_query)[:5]
     print(context)
     st.session_state.context_log = [context]
     
-    llm = ChatOpenAI(api_key=OPENAI_API_KEY)
+    llm = CustomLLM()
     
     template = """
         You are an AI Syllabus assistant. Answer the question below according to your knowledge in a way that will be helpful to students asking questions about the syllabus.
