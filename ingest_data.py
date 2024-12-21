@@ -10,31 +10,36 @@ import warnings
 warnings.filterwarnings('ignore')
 from dotenv import load_dotenv
 from langchain_openai import OpenAIEmbeddings
-import os
-import io
 import tempfile
+from pathlib import Path
+from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
+
+
 
 
 load_dotenv()
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+#OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
-
-embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+embeddings = FastEmbedEmbeddings()
 
 # Initialize Pinecone with API key
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 
 # Define Pinecone index
-index_name = "test-index"
+index_name = "testfinal"
 index = pc.Index(index_name)
 # Print index statistics
 index.describe_index_stats()
+
+vector_store = PineconeVectorStore.from_existing_index(index_name=index_name, embedding=embeddings)
 
 def process_and_upload_pdf(uploaded_file):
     # Create a temporary file to save the uploaded PDF
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
         temp_file.write(uploaded_file.read())
         temp_file_path = temp_file.name
+        file_stem=temp_file.name
+
 
     # Load the PDF from the temporary file path
     loader = PyPDFLoader(temp_file_path)
@@ -44,18 +49,16 @@ def process_and_upload_pdf(uploaded_file):
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
     fragments = text_splitter.split_documents(data)
     
-    # Print a sample of the combined fragments for debugging
-    #print("Total Fragments:", len(fragments))
-    sample_fragments = [str(fragment) for fragment in fragments[:3]]
-    #print("Fragments sample:", [s.encode('ascii', errors='replace').decode() for s in sample_fragments])
-
+    # Extract texts and create metadata including the filename
+    texts = [fragment.page_content for fragment in fragments]
+    metadatas = [{"source": file_stem, "chunk_id": i} for i in range(len(fragments))]
+    
     # Convert fragments into embeddings and store them in Pinecone
-    pinecone_store = PineconeVectorStore.from_documents(
-        fragments, embeddings, index_name=index_name
+    vector_store.add_texts(
+        texts=texts,
+        metadatas=metadatas
     )
-
-    # Print index statistics after adding data
-    #print("Index stats after upserting:", index.describe_index_stats())
-
+    
     # Optionally, remove the temporary file after processing
     os.remove(temp_file_path)
+
