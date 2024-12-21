@@ -7,14 +7,14 @@ load_dotenv()
 # Initialize Pinecone with API key
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 # Define index name
-index_name = "test-index"  # change if desired
+index_name = "tests-spark"  # change if desired
 
 existing_indexes = [index_info["name"] for index_info in pc.list_indexes()]
 
 if index_name not in existing_indexes:
     pc.create_index(
         name=index_name,
-        dimension=3072,
+        dimension=384,
         metric="cosine",
         spec=ServerlessSpec(cloud="aws", region="us-east-1"),
     )
